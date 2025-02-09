@@ -24,7 +24,7 @@ const Navbar = () => {
       {/* Desktop Menu */}
       <div className="menu">
         <a href="/" className="nav-link">
-          Browse Genres
+          All Books
         </a>
         <a href="/" className="nav-link">
           New Releases
