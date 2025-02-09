@@ -41,7 +41,7 @@ const SignUp = () => {
           <BookInput type="text" name="name" label="Name:" />
           <BookInput type="text" name="email" label="Email:" />
           <BookInput type="text" name="password" label="Password" />
-          <Button htmlType="submit">Login</Button>
+          <Button htmlType="submit">SignUp</Button>
         </BookForm>
       </Card>
     </div>
