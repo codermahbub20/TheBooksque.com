@@ -4,6 +4,7 @@ import config from '../config';
 import AppError from '../Errors/AppError';
 import CatchAsync from '../utils/CatchAsync';
 import { User } from '../modules/User/user.model';
+
 const auth = (...requiredRoles: string[]) => {
   return CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
     // console.log(req.headers.authorization,requiredRoles);
