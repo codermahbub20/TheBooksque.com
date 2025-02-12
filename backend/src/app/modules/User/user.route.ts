@@ -11,16 +11,22 @@ router.patch(
   '/users/:userId/block',
   auth(USER_ROLE.admin),
   // validateRequest(UserValidation.UpdateUserValidationSchema),
-  UserController.BlockUserByAdmin,
+  UserController.blockUser,
 );
 
-router.delete(
-  '/blogs/:id',
-  auth(USER_ROLE.admin),
-  // validateRequest(BlogValidationScheema.UpdateblogValidationSchema),
-  UserController.DeleteBlogByAdmin,
+router.get(
+  '/profile',
+  auth(USER_ROLE.admin, USER_ROLE.user),
+  UserController.getMyProfile,
 );
+
+// router.delete(
+//   '/blogs/:id',
+//   auth(USER_ROLE.admin),
+//   // validateRequest(BlogValidationScheema.UpdateblogValidationSchema),
+//   UserController.,
+// );
 // call the controller
-router.get('/', auth(USER_ROLE.admin), UserController.getAllUsers);
+router.get('/', auth(USER_ROLE.admin), UserController.getAllCustomers);
 
 export const userRoutes = router;

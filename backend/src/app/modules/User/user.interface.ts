@@ -1,24 +1,20 @@
-/* eslint-disable no-unused-vars */
 import { Model } from 'mongoose';
-import { USER_ROLE } from './user.constant';
 
-export interface TUser {
+/* eslint-disable no-unused-vars */
+export interface UserInterface {
+  _id: string;
   name: string;
-  _id?: string;
-  id?: string;
   email: string;
   password: string;
-  role: 'admin' | 'user';
-  isBlocked: boolean;
+  role: 'ADMIN' | 'CUSTOMER';
+  is_blocked?: boolean;
 }
 
-export interface UserModel extends Model<TUser> {
+export interface UserModel extends Model<UserInterface> {
+  isUserExists(email: string): Promise<UserInterface | null>;
+
   isPasswordMatched(
     plainTextPassword: string,
     hashedPassword: string,
   ): Promise<boolean>;
-  isUserBlocked(userEmail: string): Promise<TUser | null>;
-  isUserExistByemail(email: string): Promise<TUser | null>;
 }
-
-export type TUserRole = keyof typeof USER_ROLE;

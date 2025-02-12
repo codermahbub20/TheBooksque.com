@@ -1,51 +1,59 @@
-// import AppError from '../../Errors/AppError';
-
-import { TUser } from './user.interface';
+import { JwtPayload } from 'jsonwebtoken';
 import { User } from './user.model';
+import QueryBuilder from '../../builder/QueryBuilder';
+import AppError from '../../Errors/AppError';
 
-const createUserInToDB = async (payload: TUser) => {
-  const result = await User.create(payload);
+const GetMyProfile = async (user: JwtPayload) => {
+  const result = await User.findOne({
+    email: user.email,
+    is_blocked: false,
+  }).select('-is_blocked -createdAt -updatedAt');
+
+  if (!result) {
+    throw new AppError(404, 'User not found');
+  }
+
   return result;
 };
 
-const getAllUserFromDB = async () => {
-  const users = await User.find().exec();
-  return users;
+const GetAllCustomers = async (query: Record<string, unknown>) => {
+  const queryBuilder = new QueryBuilder(User.find({ role: 'CUSTOMER' }), query);
+
+  const users = await queryBuilder
+    .search(['name', 'email'])
+    .filter()
+    .sort()
+    .paginate()
+    .fields()
+    .modelQuery.select('-password -updatedAt');
+
+  const total = await queryBuilder.getCountQuery();
+
+  return {
+    meta: {
+      total,
+      ...queryBuilder.getPaginationInfo(),
+    },
+    data: users,
+  };
 };
 
-// const DeleteBlogByAdminFromDB = async (id: string) => {
-//   // Find the blog by ID
-//   const blog = await Blog.findById(id);
+const BlockUser = async (targatedUserId: string, user: JwtPayload) => {
+  const targatedUser = await User.findById(targatedUserId);
 
-//   if (!blog) {
-//     throw new AppError(401, 'Blog not found');
-//   }
-//   const updatedBlog = await Blog.findByIdAndUpdate(
-//     id,
-//     {
-//       isDeleted: true,
-//     },
-//     { new: true },
-//   );
+  if (!targatedUser) {
+    throw new AppError(404, 'User not found');
+  }
 
-//   return updatedBlog;
-// };
-// Blocked user by admin
-// const BlockedUserByAdminFromDB = async (id: string) => {
-//   const updatedBlog = await User.findByIdAndUpdate(
-//     id,
-//     {
-//       isBlocked: true,
-//     },
-//     { new: true },
-//   );
+  if (targatedUser._id.toString() === user._id.toString()) {
+    throw new AppError(403, 'You can not block yourself');
+  }
 
-//   return updatedBlog;
-// };
-
-export const UserServices = {
-  createUserInToDB,
-  getAllUserFromDB,
-  // DeleteBlogByAdminFromDB,
-  // BlockedUserByAdminFromDB,
+  await User.findByIdAndUpdate(targatedUserId, {
+    is_blocked: targatedUser.is_blocked ? false : true,
+  });
 };
+
+const UserService = { GetMyProfile, GetAllCustomers, BlockUser };
+
+export default UserService;

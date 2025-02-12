@@ -1,9 +1,9 @@
-import { model, Schema } from 'mongoose';
-import { TUser, UserModel } from './user.interface';
+import mongoose from 'mongoose';
+import { UserInterface, UserModel } from './user.interface';
 import config from '../../config';
 import bcrypt from 'bcrypt';
 
-const userSchema = new Schema<TUser, UserModel>(
+const UserSchema = new mongoose.Schema<UserInterface, UserModel>(
   {
     name: {
       type: String,
@@ -17,56 +17,48 @@ const userSchema = new Schema<TUser, UserModel>(
     password: {
       type: String,
       required: true,
+      select: false,
     },
     role: {
       type: String,
-      enum: ['admin', 'user'],
-      default: 'user',
+      required: true,
+      enum: ['ADMIN', 'CUSTOMER'],
+      default: 'CUSTOMER',
     },
-    isBlocked: {
+    is_blocked: {
       type: Boolean,
       default: false,
     },
   },
   {
     timestamps: true,
+    toJSON: {
+      virtuals: true,
+      versionKey: false,
+    },
   },
 );
 
-userSchema.pre('save', async function (next) {
+UserSchema.pre('save', async function (next) {
   // eslint-disable-next-line @typescript-eslint/no-this-alias
   const user = this; // doc
-  // hashing password and save into DB
-  user.password = await bcrypt.hash(
-    user.password,
-    Number(config.bcrypt_salt_rounds),
-  );
+  const salt_round = Number(config.bcrypt_salt_rounds);
+  user.password = await bcrypt.hash(user.password, salt_round);
   next();
 });
 
-// set '' after saving password
-userSchema.post('save', function (doc, next) {
-  doc.password = '';
-  next();
-});
+UserSchema.statics.isUserExists = async function (email: string) {
+  return await User.findOne({ email }).select('+password');
+};
 
-userSchema.statics.isPasswordMatched = async function (
+UserSchema.statics.isPasswordMatched = async function (
   plainTextPassword,
   hashedPassword,
 ) {
   return await bcrypt.compare(plainTextPassword, hashedPassword);
 };
 
-userSchema.statics.isUserBlocked = async function (userEmail: string) {
-  const user = await this.findOne({ email: userEmail, isBlocked: true });
-  return user;
-};
-
-userSchema.statics.isUserExistByemail = async function (
-  email: string,
-): Promise<TUser | null> {
-  const user = await this.findOne({ email }).select('+password');
-  return user;
-};
-
-export const User = model<TUser, UserModel>('User', userSchema);
+export const User = mongoose.model<UserInterface, UserModel>(
+  'Users',
+  UserSchema,
+);

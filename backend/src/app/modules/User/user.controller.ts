@@ -1,57 +1,44 @@
-import { Request, RequestHandler, Response } from 'express';
 import CatchAsync from '../../utils/CatchAsync';
 import sendResponse from '../../utils/sendResponse';
-import { UserServices } from './user.service';
+import UserService from './user.service';
 
-const createUser = CatchAsync(async (req: Request, res: Response) => {
-  const result = await UserServices.createUserInToDB(req.body);
+const getMyProfile = CatchAsync(async (req, res) => {
+  const user = req.user;
+
+  const result = await UserService.GetMyProfile(user);
+
   sendResponse(res, {
-    statusCode: 201,
     success: true,
-    message: 'User registered successfully',
+    statusCode: 200,
+    message: 'User profile fetched successfully',
     data: result,
   });
 });
 
-const getAllUsers: RequestHandler = CatchAsync(async (req, res) => {
-  const result = await UserServices.getAllUserFromDB();
+const getAllCustomers = CatchAsync(async (req, res) => {
+  const result = await UserService.GetAllCustomers(req.query);
+
   sendResponse(res, {
-    statusCode: 200,
     success: true,
-    message: 'Users are fetched  successfully',
-    data: result,
+    statusCode: 200,
+    message: 'Customers fetched successfully',
+    meta: result.meta,
+    data: result.data,
   });
 });
 
-const DeleteBlogByAdmin: RequestHandler = CatchAsync(async (req, res) => {
-  const { id } = req.params;
-  // Add the author's ID to the blog data
-  await UserServices.DeleteBlogByAdminFromDB(id);
+const blockUser = CatchAsync(async (req, res) => {
+  const { targatedUserId } = req.params;
+  const user = req.user;
+
+  await UserService.BlockUser(targatedUserId, user);
+
   sendResponse(res, {
-    statusCode: 200,
     success: true,
-    message: 'Blog deleted successfully',
+    statusCode: 200,
+    message: 'User blocked successfully',
     data: {},
   });
 });
 
-const BlockUserByAdmin: RequestHandler = CatchAsync(async (req, res) => {
-  const id = req.params.userId;
-
-  // Add the author's ID to the blog data
-  await UserServices.BlockedUserByAdminFromDB(id);
-
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: 'User Blocked successfully',
-    data: {},
-  });
-});
-
-export const UserController = {
-  createUser,
-  getAllUsers,
-  DeleteBlogByAdmin,
-  BlockUserByAdmin,
-};
+export const UserController = { getMyProfile, blockUser, getAllCustomers };
