@@ -1,55 +1,143 @@
 import { User } from '../User/user.model';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import { JwtPayload } from 'jsonwebtoken';
 import config from '../../config';
+import { TLoginUser, TRegisterUser } from './auth.interface';
+import AppError from '../../Errors/AppError';
+import AuthUtils from './auth.utils';
 
-const register = async (payload: string) => {
-  const result = await User.create(payload);
-  return result;
-};
-
-const login = async (payload: { email: string; password: string }) => {
-  // checking if the user is exist
-  const user = await User.findOne({ email: payload?.email }).select(
-    '+password',
-  );
+const login = async (payload: TLoginUser) => {
+  const user = await User.isUserExistByemail(payload.email);
 
   if (!user) {
-    throw new Error('This user is not found !');
+    throw new AppError(404, 'No user found with this email');
   }
 
-  // checking if the user is inactive
-  const userStatus = user?.isBlocked;
+  const is_blocked = user?.isBlocked;
 
-  if (userStatus === true) {
-    throw new Error('This user is blocked ! !');
+  if (is_blocked) {
+    throw new AppError(403, 'User is blocked');
   }
 
-  //checking if the password is correct
-  const isPasswordMatched = await bcrypt.compare(
-    payload?.password,
-    user?.password,
+  const isPasswordMatched = await User.isPasswordMatched(
+    payload.password,
+    user.password,
   );
 
   if (!isPasswordMatched) {
-    throw new Error('Wrong Password!!! Tell me who are you? 😈');
+    throw new AppError(401, 'Invalid password');
   }
 
-  //create token and sent to the  client
   const jwtPayload = {
     id: user._id,
-    email: user?.email,
-    role: user?.role,
+    email: user.email,
+    role: user.role,
   };
 
-  const token = jwt.sign(jwtPayload, config.jwt_access_secret as string, {
-    expiresIn: '1d',
-  });
+  const accessToken = AuthUtils.CreateToken(
+    jwtPayload,
+    config.jwt_access_secret as string,
+    config.jwt_access_token_expires_in as string,
+  );
 
-  return { token };
+  const refreshToken = AuthUtils.CreateToken(
+    jwtPayload,
+    config.jwt_access_secret as string,
+    config.jwt_access_token_expires_in as string,
+  );
+
+  return { accessToken, refreshToken };
+};
+
+const register = async (payload: TRegisterUser) => {
+  const isUserExists = await User.isUserExistByemail(payload.email);
+
+  if (isUserExists) {
+    throw new AppError(400, 'User already exists');
+  }
+
+  const user = await User.create({ ...payload });
+
+  const jwtPayload = {
+    id: user._id,
+    email: user.email,
+    role: user.role,
+  };
+
+  const accessToken = AuthUtils.CreateToken(
+    jwtPayload,
+    config.jwt_access_secret as string,
+    config.jwt_access_token_expires_in as string,
+  );
+
+  const refreshToken = AuthUtils.CreateToken(
+    jwtPayload,
+    config.jwt_access_secret as string,
+    config.jwt_access_token_expires_in as string,
+  );
+
+  return { accessToken, refreshToken };
+};
+
+const RefreshToken = async (refreshToken: string) => {
+  const decoded = AuthUtils.VerifyToken(
+    refreshToken,
+    config.jwt_access_token_expires_in as string,
+  ) as JwtPayload;
+
+  const user = await User.findOne({ _id: decoded.id, is_blocked: false });
+
+  if (!user) {
+    throw new AppError(404, 'No user found');
+  }
+
+  const jwtPayload = {
+    id: user._id,
+    email: user.email,
+    role: user.role,
+  };
+
+  const accessToken = AuthUtils.CreateToken(
+    jwtPayload,
+    config.jwt_access_secret as string,
+    config.jwt_access_token_expires_in as string,
+  );
+
+  return { accessToken };
+};
+
+const ChangePassword = async (
+  payload: {
+    oldPassword: string;
+    newPassword: string;
+  },
+  user: JwtPayload,
+) => {
+  const isUserValid = await User.findOne({
+    _id: user.id,
+    is_blocked: false,
+  }).select('+password');
+
+  if (!isUserValid) {
+    throw new AppError(404, 'No user found');
+  }
+
+  const isPasswordMatched = await bcrypt.compare(
+    payload.oldPassword,
+    isUserValid.password,
+  );
+
+  if (!isPasswordMatched) {
+    throw new AppError(401, 'Invalid password');
+  }
+
+  isUserValid.password = payload.newPassword;
+  await isUserValid.save();
 };
 
 export const AuthService = {
   register,
   login,
+  RefreshToken,
+  ChangePassword,
 };

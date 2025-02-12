@@ -23,6 +23,10 @@ const userSchema = new Schema<TUser, UserModel>(
       enum: ['admin', 'user'],
       default: 'user',
     },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
