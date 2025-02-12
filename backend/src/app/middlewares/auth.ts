@@ -5,36 +5,47 @@ import AppError from '../Errors/AppError';
 import CatchAsync from '../utils/CatchAsync';
 import { User } from '../modules/User/user.model';
 
-const auth = (...requiredRoles: string[]) => {
-  return CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    // console.log(req.headers.authorization,requiredRoles);
-    const token = req.headers.authorization;
-    if (!token) {
-      throw new AppError(403, `Unauthorized User `);
-    }
-    const actualToken = token.startsWith('Bearer ') ? token.slice(7) : token;
-    const decoded = jwt.verify(actualToken, config.jwt_access_secret as string);
+type Role = 'admin' | 'user';
 
-    const { role, email } = decoded as JwtPayload;
-    const user = await User.isUserExistByemail(email);
-    if (!user) {
-      throw new AppError(401, `Invalid credentials`);
-    }
-    const BlockedUser = await User.isUserBlocked(email);
-    if (BlockedUser) {
-      throw new AppError(403, `The user is blocked `);
-    }
-    // const isUserisDeleted=user?.isDeleted
-    // if(isUserisDeleted){
-    //     throw new AppError(httpStatus.FORBIDDEN,`The user is deleted `);
-    // }
-    console.log(requiredRoles.includes(role));
-    // if (requiredRoles && !requiredRoles.includes(role)) {
-    //   throw new AppError(403, `Unauthorized User `);
-    // }
-    req.user = decoded as JwtPayload;
+const auth = (...roles: Role[]) => {
+  return CatchAsync(
+    async (req: Request, _res: Response, next: NextFunction) => {
+      const bearerToken = req.headers.authorization;
 
-    next();
-  });
+      if (!bearerToken || !bearerToken.startsWith('Bearer ')) {
+        throw new AppError(401, 'Invalid or missing authorization header');
+      }
+
+      const token = bearerToken.split(' ')[1];
+
+      if (!token) {
+        throw new AppError(401, "You're not authorized to access this route");
+      }
+
+      const decoded = jwt.verify(
+        token,
+        config.jwt_access_secret as string,
+      ) as JwtPayload;
+
+      const { email } = decoded;
+
+      const user = await User.isUserExistByemail(email);
+
+      if (!user) {
+        throw new AppError(401, "You're not authorized to access this route");
+      }
+
+      if (roles.length && !roles.includes(user.role)) {
+        throw new AppError(
+          403,
+          "You don't have permission to access this route",
+        );
+      }
+
+      req.user = user;
+
+      next();
+    },
+  );
 };
 export default auth;
