@@ -7,16 +7,10 @@ import AppError from '../../Errors/AppError';
 import AuthUtils from './auth.utils';
 
 const login = async (payload: TLoginUser) => {
-  const user = await User.isUserExistByemail(payload.email);
+  const user = await User.isUserExists(payload.email);
 
   if (!user) {
     throw new AppError(404, 'No user found with this email');
-  }
-
-  const is_blocked = user?.isBlocked;
-
-  if (is_blocked) {
-    throw new AppError(403, 'User is blocked');
   }
 
   const isPasswordMatched = await User.isPasswordMatched(
@@ -50,7 +44,7 @@ const login = async (payload: TLoginUser) => {
 };
 
 const register = async (payload: TRegisterUser) => {
-  const isUserExists = await User.isUserExistByemail(payload.email);
+  const isUserExists = await User.isUserExists(payload.email);
 
   if (isUserExists) {
     throw new AppError(400, 'User already exists');

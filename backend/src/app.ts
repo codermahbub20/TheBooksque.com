@@ -1,17 +1,17 @@
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
-import { BookRoutes } from './app/modules/book/book.route';
-import { OrderRoutes } from './app/modules/orders/order.route';
+
+import router from './app/routes';
 const app: Application = express();
 
 // parsers use
 app.use(express.json());
-app.use(cors());
+app.use(cors({ origin: ['http://localhost:5173'], credentials: true }));
 
 //  application routes
-app.use('/api', BookRoutes);
-// Order routes
-app.use('/api', OrderRoutes);
+app.use('/api/v1', router);
+// // Order routes
+// app.use('/api', OrderRoutes);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello World!');

@@ -3,12 +3,38 @@ import "antd/dist/reset.css"; // Ensure this is imported for styling
 import BookForm from "../../component/form/BookForm";
 import BookInput from "../../component/form/BookInput";
 import { FieldValues } from "react-hook-form";
+import { useAppDispatch } from "../../redux/hooks";
+import { useRegisterMutation } from "../../redux/features/auth/authApi";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { setUser } from "../../redux/features/auth/authSlice";
 
 const { Title } = Typography;
 
 const SignUp = () => {
-  const onSubmit = (data: FieldValues) => {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const [register] = useRegisterMutation();
+
+  const onSubmit = async (data: FieldValues) => {
     console.log(data);
+
+    const toastId = toast.loading("Logging in");
+
+    try {
+      const userInfo = {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+      };
+      const res = await register(userInfo).unwrap();
+      const token = res.data.token;
+      dispatch(setUser({ token }));
+      toast.success("Registration successful", { id: toastId, duration: 2000 });
+      navigate(`/`);
+    } catch (err) {
+      toast.error("Something went wrong", { id: toastId, duration: 2000 });
+    }
   };
 
   return (
