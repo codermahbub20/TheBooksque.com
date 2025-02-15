@@ -28,12 +28,12 @@ const FeaturedProducts: React.FC = () => {
           level={2}
           className="!text-4xl !font-bold !text-[#18181b]"
         >
-          Featured Bicycles
+          Featured Books
         </Title>
         <Paragraph
           style={{ fontSize: "20px", textAlign: "center", marginTop: "20px" }}
         >
-          Discover the latest premium bicycles designed for performance.
+          Discover the latest premium books designed for performance.
         </Paragraph>
       </div>
 
@@ -51,7 +51,7 @@ const FeaturedProducts: React.FC = () => {
         </Row>
 
         {/* View More Button */}
-        <Link to={"/products"} className="mt-8 flex justify-center">
+        <Link to={"/all-books"} className="mt-8 flex justify-center">
           <Button
             block
             size="large"
