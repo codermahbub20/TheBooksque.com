@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from 'express';
 import { BookServices } from './book.service';
+import sendResponse from '../../utils/sendResponse';
+import CatchAsync from '../../utils/CatchAsync';
 
 const createProducts = async (req: Request, res: Response) => {
   try {
@@ -23,28 +25,17 @@ const createProducts = async (req: Request, res: Response) => {
 };
 
 // Get all products in to the database
-const getAllProducts = async (req: Request, res: Response) => {
-  try {
-    const { searchTerm } = req.query;
-    // Pass the searchTerm to the service
-    const result = await BookServices.getAllProductsInToDb(
-      searchTerm as string,
-    );
+const getAllProducts = CatchAsync(async (req, res) => {
+  // Add the author's ID to the blog data
+  const result = await BookServices.getAllProductsInToDb(req.query);
 
-    res.status(200).json({
-      success: true,
-      message: 'Books retrieved successfully',
-      data: result,
-    });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (err: any) {
-    res.status(500).json({
-      success: false,
-      message: 'Something went wrong',
-      data: err.message,
-    });
-  }
-};
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: 'Books fetched successfully',
+    data: result,
+  });
+});
 
 // Get single products in to the database
 

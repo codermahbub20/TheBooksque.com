@@ -17,7 +17,7 @@ const routes: Route[] = [
     route: authRoutes,
   },
   {
-    path: '/products',
+    path: '/',
     route: BookRoutes,
   },
   {

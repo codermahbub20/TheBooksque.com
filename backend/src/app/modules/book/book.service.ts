@@ -1,3 +1,5 @@
+import QueryBuilder from '../../builder/QueryBuilder';
+import { bookSearchableFields } from './book.constant';
 import { Book } from './book.interface';
 import { BookModel } from './book.model';
 
@@ -8,31 +10,18 @@ const createProductsInToDb = async (book: Book) => {
 
 // get all products in database
 
-const getAllProductsInToDb = async (searchTerm: string) => {
-  try {
-    let query = {};
+const getAllProductsInToDb = async (query: Record<string, unknown>) => {
+  const Books = new QueryBuilder(BookModel.find(), query)
+    .search(bookSearchableFields)
+    .filter()
+    .sort()
+    .paginate()
+    .fields();
 
-    if (searchTerm) {
-      const regex = new RegExp(searchTerm, 'i');
-      query = {
-        $or: [
-          { title: { $regex: regex } },
-          { author: { $regex: regex } },
-          { category: { $regex: regex } },
-        ],
-      };
-    }
-    const result = await BookModel.find(query);
-    if (result.length === 0) {
-      throw new Error('No Book matched your search criteria.');
-    }
-    return result;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    throw new Error(`Error fetching Book: ${error.message}`);
-  }
+  const result = await Books.modelQuery;
+
+  return result;
 };
-
 // Get Specific id wise data into the database
 
 const getSingleProductsIntoDb = async (_id: string) => {

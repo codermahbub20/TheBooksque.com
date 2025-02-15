@@ -3,29 +3,23 @@ import { FilterQuery, Query } from 'mongoose';
 class QueryBuilder<T> {
   public modelQuery: Query<T[], T>;
   public query: Record<string, unknown>;
-  public page: number;
-  public limit: number;
 
   constructor(modelQuery: Query<T[], T>, query: Record<string, unknown>) {
     this.modelQuery = modelQuery;
     this.query = query;
-    this.page = Number(query.page) || 1;
-    this.limit = Number(query.limit) || 10;
   }
 
   search(searchableFields: string[]) {
     const search = this?.query?.search;
     if (search) {
-      const searchCondition = {
+      this.modelQuery = this.modelQuery.find({
         $or: searchableFields.map(
           (field) =>
             ({
               [field]: { $regex: search, $options: 'i' },
             }) as FilterQuery<T>,
         ),
-      };
-
-      this.modelQuery = this.modelQuery.find(searchCondition);
+      });
     }
 
     return this;
@@ -34,27 +28,45 @@ class QueryBuilder<T> {
   filter() {
     const queryObj = { ...this.query };
 
-    const excludeFields = ['search', 'sort', 'limit', 'page', 'fields'];
+    // Filtering
+    const excludeFields = [
+      'search',
+      'sortOrder',
+      'sortBy',
+      'limit',
+      'page',
+      'fields',
+    ];
 
+    // Remove excluded fields
     excludeFields.forEach((el) => delete queryObj[el]);
 
+    if (queryObj.filter) {
+      queryObj['author._id'] = queryObj.filter;
+      delete queryObj.filter;
+    }
+
+    // Apply the filter query to the model
     this.modelQuery = this.modelQuery.find(queryObj as FilterQuery<T>);
 
     return this;
   }
 
   sort() {
-    const sort =
-      (this?.query?.sort as string)?.split(',')?.join(' ') || '-createdAt';
-    this.modelQuery = this.modelQuery.sort(sort as string);
-
+    const sortBy =
+      (this?.query?.sortBy as string)?.split(',')?.join(' ') || 'createdAt';
+    const sortOrder = this?.query?.sortOrder || 'desc';
+    const sortQuery = sortOrder === 'desc' ? `-${sortBy}` : sortBy;
+    this.modelQuery = this.modelQuery.sort(sortQuery);
     return this;
   }
 
   paginate() {
-    const skip = (this.page - 1) * this.limit;
+    const page = Number(this?.query?.page) || 1;
+    const limit = Number(this?.query?.limit) || 10;
+    const skip = (page - 1) * limit;
 
-    this.modelQuery = this.modelQuery.skip(skip).limit(this.limit);
+    this.modelQuery = this.modelQuery.skip(skip).limit(limit);
 
     return this;
   }
@@ -65,18 +77,6 @@ class QueryBuilder<T> {
 
     this.modelQuery = this.modelQuery.select(fields);
     return this;
-  }
-
-  getCountQuery() {
-    const baseQuery = this.modelQuery.getQuery();
-    return this.modelQuery.model.countDocuments(baseQuery);
-  }
-
-  getPaginationInfo() {
-    return {
-      page: this.page,
-      limit: this.limit,
-    };
   }
 }
 
