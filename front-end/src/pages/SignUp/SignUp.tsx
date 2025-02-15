@@ -8,6 +8,8 @@ import { useRegisterMutation } from "../../redux/features/auth/authApi";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { setUser } from "../../redux/features/auth/authSlice";
+import { verifyToken } from "../../utils/verifyToken";
+import { IUser } from "../Navbar/UserProfileBox";
 
 const { Title } = Typography;
 
@@ -19,7 +21,7 @@ const SignUp = () => {
   const onSubmit = async (data: FieldValues) => {
     console.log(data);
 
-    const toastId = toast.loading("Logging in");
+    // const toastId = toast.loading("Logging in");
 
     try {
       const userInfo = {
@@ -28,12 +30,12 @@ const SignUp = () => {
         password: data.password,
       };
       const res = await register(userInfo).unwrap();
-      const token = res.data.token;
-      dispatch(setUser({ token }));
-      toast.success("Registration successful", { id: toastId, duration: 2000 });
+      const user = verifyToken(res.data.accessToken) as IUser;
+      dispatch(setUser({ user: user, token: res.data.accessToken }));
+      toast.success("Registration successful");
       navigate(`/`);
     } catch (err) {
-      toast.error("Something went wrong", { id: toastId, duration: 2000 });
+      toast.error("Something went wrong");
     }
   };
 

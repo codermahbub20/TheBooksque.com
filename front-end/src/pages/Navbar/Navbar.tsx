@@ -1,15 +1,23 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
-  UserOutlined,
+  // UserOutlined,
   ShoppingOutlined,
   MenuOutlined,
   CloseOutlined,
 } from "@ant-design/icons";
-import { Drawer } from "antd";
+import { Button, Drawer } from "antd";
 import "./Navbar.css";
+import { useAppSelector } from "../../redux/hooks";
+import { useCurrentToken } from "../../redux/features/auth/authSlice";
+
+import { Link } from "react-router-dom";
+import MenuDrpDown from "./MenuDrpDown";
 
 const Navbar = () => {
   const [visible, setVisible] = useState(false);
+
+  const token = useAppSelector(useCurrentToken);
+  console.log(token);
 
   return (
     <div className="navbar">
@@ -39,7 +47,22 @@ const Navbar = () => {
 
       {/* Icons & Mobile Menu */}
       <div className="icons">
-        <UserOutlined className="icon" />
+        {token ? (
+          <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-end">
+            <MenuDrpDown />
+          </div>
+        ) : (
+          <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-end lg:gap-2">
+            <Link to="/login">
+              <Button className="text-sm font-semibold text-gray-900">
+                Log in
+              </Button>
+            </Link>
+            <Link to="/signin" className="ml-4">
+              <Button>Sign up</Button>
+            </Link>
+          </div>
+        )}
         <ShoppingOutlined className="icon" />
         <MenuOutlined className="menu-icon" onClick={() => setVisible(true)} />
       </div>
