@@ -23,10 +23,12 @@ const Navbar = () => {
     <div className="navbar">
       {/* Logo */}
       <div className="logo">
-        <img
-          src="https://dt-booksque.myshopify.com/cdn/shop/files/logo.png?v=1666181538&width=230"
-          alt="Logo"
-        />
+        <a href="/">
+          <img
+            src="https://dt-booksque.myshopify.com/cdn/shop/files/logo.png?v=1666181538&width=230"
+            alt="Logo"
+          />
+        </a>
       </div>
 
       {/* Desktop Menu */}

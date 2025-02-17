@@ -4,6 +4,7 @@ import MainLayout from "../component/layout/MainLayout";
 import Home from "../pages/Home/Home";
 import SignUp from "../pages/SignUp/SignUp";
 import AllProductsPage from "../pages/AllProducts/AllProduct";
+import ProductDetailsPage from "../pages/ProductDetailsPage/ProductDetailsPage";
 
 const router = createBrowserRouter([
   {
@@ -17,6 +18,10 @@ const router = createBrowserRouter([
       {
         path: "/all-books",
         element: <AllProductsPage />,
+      },
+      {
+        path: "/products/:productId",
+        element: <ProductDetailsPage />,
       },
     ],
   },

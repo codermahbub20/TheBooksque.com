@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState } from "react";
+import { useState } from "react";
 import { Input, Select, Row, Col, Slider, Pagination } from "antd";
 import { SearchOutlined } from "@ant-design/icons";
 import { useGetProductsQuery } from "../../redux/features/product/productApi";

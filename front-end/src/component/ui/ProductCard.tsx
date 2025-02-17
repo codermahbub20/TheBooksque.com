@@ -29,7 +29,7 @@ const ProductCard: React.FC<ProductProps> = ({ product }) => {
 
   if (token) {
     const user = verifyToken(token as string);
-    role = user.role;
+    role = user?.role;
   }
 
   return (
@@ -88,11 +88,11 @@ const ProductCard: React.FC<ProductProps> = ({ product }) => {
         icon={<ShoppingOutlined />}
         size="large"
         className={`mt-3 rounded-lg font-semibold ${
-          product.in_stock
+          product.inStock
             ? "bg-[#b89579] text-white hover:bg-[#a48d70]"
             : "bg-gray-300 text-gray-500 cursor-not-allowed"
         }`}
-        disabled={!product.in_stock}
+        disabled={!product.inStock}
         onClick={(e) => {
           e.stopPropagation();
           if (!token) {
