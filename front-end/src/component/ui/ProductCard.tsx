@@ -1,11 +1,10 @@
 import React from "react";
 import { Card, Button, Tag } from "antd";
-import { ShoppingOutlined } from "@ant-design/icons";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { useAppSelector } from "../../redux/hooks";
+import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { useCurrentToken } from "../../redux/features/auth/authSlice";
 import { verifyToken } from "../../utils/verifyToken";
+import { addToCart } from "../../redux/features/cart/cartSlice";
+import { ShoppingCart } from "lucide-react";
 
 interface ProductProps {
   product: {
@@ -23,8 +22,9 @@ interface ProductProps {
 }
 
 const ProductCard: React.FC<ProductProps> = ({ product }) => {
-  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const token = useAppSelector(useCurrentToken);
+
   let role = null;
 
   if (token) {
@@ -32,11 +32,25 @@ const ProductCard: React.FC<ProductProps> = ({ product }) => {
     role = user?.role;
   }
 
+  const handleAddToCart = () => {
+    console.log("Clicked Add to Cart:", product._id);
+    dispatch(
+      addToCart({
+        product: product._id,
+        name: product?.title,
+        price: product.price,
+        quantity: 1,
+        inStock: product.inStock,
+        image: product?.image ? product?.image : ("" as string),
+      })
+    );
+  };
+
   return (
     <Card
       hoverable
       className="rounded-xl border border-gray-200 shadow-sm"
-      onClick={() => navigate(`/products/${product?._id}`)}
+      // onClick={() => navigate(`/products/${product?._id}`)}
     >
       {/* Product Image or Placeholder */}
       <div className="relative flex justify-center items-center bg-gray-100 rounded-lg aspect-square">
@@ -83,44 +97,13 @@ const ProductCard: React.FC<ProductProps> = ({ product }) => {
       </div>
 
       {/* Buy Now Button */}
-      <Button
-        block
-        icon={<ShoppingOutlined />}
-        size="large"
-        className={`mt-3 rounded-lg font-semibold ${
-          product.inStock
-            ? "bg-[#b89579] text-white hover:bg-[#a48d70]"
-            : "bg-gray-300 text-gray-500 cursor-not-allowed"
-        }`}
-        disabled={!product.inStock}
-        onClick={(e) => {
-          e.stopPropagation();
-          if (!token) {
-            toast.message("Please login to buy products", {
-              description: "You need to login to buy products",
-              action: {
-                label: "Login",
-                onClick: () => {
-                  navigate(
-                    `/login?next=/checkout?product=${product._id}&quantity=1`
-                  );
-                },
-              },
-            });
-            return;
-          }
 
-          if (role === "ADMIN") {
-            toast.message("Admins can't buy products", {
-              description: "Please login as a customer to buy products",
-            });
-          } else {
-            navigate(`/checkout?product=${product._id}&quantity=1`);
-          }
-        }}
-      >
-        Buy Now
-      </Button>
+      <div className="mt-6 flex ">
+        <Button onClick={() => handleAddToCart()} className="w-full">
+          <ShoppingCart className="w-5 h-5 mr-2" />
+          Add to Cart
+        </Button>
+      </div>
     </Card>
   );
 };

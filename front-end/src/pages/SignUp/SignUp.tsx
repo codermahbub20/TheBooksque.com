@@ -1,4 +1,5 @@
 import { Button, Card, Typography } from "antd";
+
 import "antd/dist/reset.css"; // Ensure this is imported for styling
 import BookForm from "../../component/form/BookForm";
 import BookInput from "../../component/form/BookInput";
@@ -9,7 +10,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { setUser } from "../../redux/features/auth/authSlice";
 import { verifyToken } from "../../utils/verifyToken";
-import { IUser } from "../Navbar/UserProfileBox";
+import { IUser } from "../../types/book.type";
 
 const { Title } = Typography;
 

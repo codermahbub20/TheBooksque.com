@@ -25,3 +25,10 @@ export interface BookApiResponse {
   meta: Meta;
   data: Book[] | [];
 }
+export interface IUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  iat: number;
+}
