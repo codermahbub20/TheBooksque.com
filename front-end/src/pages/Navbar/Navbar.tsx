@@ -86,7 +86,7 @@ const CartSheet = () => {
               {cartData?.items.map((item) => (
                 <li key={item.product} className="flex items-center gap-4">
                   <img
-                    src={item.imageUrl}
+                    src={item.image}
                     alt={item.name}
                     className="h-16 w-16 rounded object-cover"
                   />
@@ -114,7 +114,10 @@ const CartSheet = () => {
                           dispatch(
                             updateQuantity({
                               id: item.product,
-                              quantity: Math.min(item.quantity + 1, item.stock),
+                              quantity: Math.min(
+                                item.quantity + 1,
+                                item?.stock
+                              ),
                             })
                           )
                         }

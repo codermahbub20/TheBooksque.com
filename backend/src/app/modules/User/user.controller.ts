@@ -22,7 +22,7 @@ const getAllCustomers = CatchAsync(async (req, res) => {
     success: true,
     statusCode: 200,
     message: 'Customers fetched successfully',
-    meta: result.meta,
+    // meta: result.meta,
     data: result.data,
   });
 });

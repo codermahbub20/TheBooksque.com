@@ -1,69 +1,40 @@
-import { NextFunction, Request, Response } from 'express';
-import { OrderServices } from './order.services';
+import CatchAsync from '../../utils/CatchAsync';
+import sendResponse from '../../utils/sendResponse';
+import { orderService } from './order.services';
 
-const createOrder = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): Promise<any> => {
-  try {
-    // received response data from clients
-    const order = req.body;
-    // send the data in services function to save this data in mongodb
-    const result = await OrderServices.createOrderInToDb(order);
-    if (!result) {
-      return res.status(404).json({
-        message: 'Order not found',
-        success: false,
-      });
-    }
+const createOrder = CatchAsync(async (req, res) => {
+  const user = req.user;
 
-    res.status(200).json({
-      message: 'Order created successfully',
-      success: true,
-      data: result,
-    });
-    next();
-  } catch (error) {
-    let errorResponse;
-    if (error instanceof Error) {
-      try {
-        errorResponse = JSON.parse(error.message);
-      } catch {
-        errorResponse = {
-          message: 'An unexpected error occurred.',
-          success: false,
-          error: error.message,
-          stack: error.stack,
-        };
-      }
-    }
+  const order = await orderService.createOrder(user, req.body, req.ip!);
 
-    res.status(400).json(errorResponse);
-  }
-};
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: 'Order placed successfully',
+    data: order,
+  });
+});
 
-// Revenue
-const getTotalRevenue = async (req: Request, res: Response) => {
-  try {
-    const totalRevenue = await OrderServices.calculateTotalRevenueInToDb();
-    res.status(200).json({
-      message: 'Total revenue calculated successfully',
-      status: true,
-      data: { totalRevenue },
-    });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    res.status(500).json({
-      message: 'Failed to calculate total revenue',
-      status: false,
-      error: error.message,
-    });
-  }
-};
+const getOrders = CatchAsync(async (req, res) => {
+  const order = await orderService.getOrders();
 
-export const OrderControllers = {
-  createOrder,
-  getTotalRevenue,
-};
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: 'Order retrieved successfully',
+    data: order,
+  });
+});
+
+const verifyPayment = CatchAsync(async (req, res) => {
+  const order = await orderService.verifyPayment(req.query.order_id as string);
+
+  sendResponse(res, {
+    success: true,
+    statusCode: 200,
+    message: 'Order verified successfully',
+    data: order,
+  });
+});
+
+export const orderController = { createOrder, verifyPayment, getOrders };

@@ -1,51 +1,59 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable no-unused-vars */
+import { NextFunction, Response } from 'express';
+import { Request } from 'express'; // Keep this import to ensure proper type extension
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import { NextFunction, Request, Response } from 'express';
 import config from '../config';
-import AppError from '../Errors/AppError';
 import CatchAsync from '../utils/CatchAsync';
+import AppError from '../Errors/AppError';
 import { User } from '../modules/User/user.model';
 
-type Role = 'admin' | 'user';
+// types/auth.ts
+declare module 'express-serve-static-core' {
+  export interface Request {
+    user?: AuthenticatedUser;
+  }
+}
 
-const auth = (...roles: Role[]) => {
-  return CatchAsync(
-    async (req: Request, _res: Response, next: NextFunction) => {
-      const bearerToken = req.headers.authorization;
+export interface AuthenticatedUser extends JwtPayload {
+  role: string;
+  email: string;
+}
 
-      if (!bearerToken || !bearerToken.startsWith('Bearer ')) {
-        throw new AppError(401, 'Invalid or missing authorization header');
-      }
+// middleware/auth.ts
+const auth = (...requiredRoles: string[]) => {
+  return CatchAsync(async (req: Request, res: Response, next: NextFunction) => {
+    const authorizationHeader = req.headers.authorization;
 
-      const token = bearerToken.split(' ')[1];
+    if (!authorizationHeader || !authorizationHeader.startsWith('Bearer ')) {
+      throw new AppError(401, 'Authentication token missing or invalid format');
+    }
 
-      if (!token) {
-        throw new AppError(401, "You're not authorized to access this route");
-      }
+    const token = authorizationHeader.split(' ')[1];
 
+    try {
       const decoded = jwt.verify(
         token,
         config.jwt_access_secret as string,
-      ) as JwtPayload;
+      ) as AuthenticatedUser;
 
-      const { email } = decoded;
-
-      const user = await User.isUserExistByemail(email);
+      const user = await User.isUserExists(decoded.email);
 
       if (!user) {
-        throw new AppError(401, "You're not authorized to access this route");
+        throw new AppError(400, 'User not found');
       }
 
-      if (roles.length && !roles.includes(user.role)) {
-        throw new AppError(
-          403,
-          "You don't have permission to access this route",
-        );
+      if (requiredRoles.length && !requiredRoles.includes(decoded.role)) {
+        throw new AppError(403, 'Forbidden - Insufficient permissions');
       }
 
-      req.user = user;
+      (req as Request).user = decoded;
 
       next();
-    },
-  );
+    } catch (err) {
+      throw new AppError(401, 'Invalid authentication token');
+    }
+  });
 };
+
 export default auth;

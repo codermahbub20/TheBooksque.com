@@ -1,10 +1,13 @@
 import express from 'express';
-import { OrderControllers } from './order.controler';
+import { orderController } from './order.controler';
 
 const router = express.Router();
 
-router.post('/orders', OrderControllers.createOrder);
+router.get('/verify', orderController.verifyPayment);
 
-router.get('/orders/revenue', OrderControllers.getTotalRevenue);
+router
+  .route('/')
+  .post(orderController.createOrder)
+  .get(orderController.getOrders);
 
 export const OrderRoutes = router;
